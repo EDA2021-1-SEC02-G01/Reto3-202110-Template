@@ -34,11 +34,19 @@ se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
 
-def printMenu():
-    print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
 
+def printMenu():
+    print("="*26)
+    print("="*10 + " Reto " + "="*10)
+    print("="*26)
+    print("1- Inicializar catálogo")
+    print("2- Cargar información en el catálogo")
+    print("X- Presione cualquier otra tecla para salir")
+
+
+events = 'user_track_hashtag_timestamp-small.csv'
+sentiments = 'sentiment_values.csv'
+context = 'context_content_features-small.csv'
 catalog = None
 
 """
@@ -48,11 +56,25 @@ while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
-        print("Cargando información de los archivos ....")
+        # cont es el controlador que se usará de acá en adelante
+        print('Inicializando el catálogo ...\n')
+        analyzer = controller.init()
 
     elif int(inputs[0]) == 2:
-        pass
-
+        print("Cargando información de los archivos ...\n")
+        controller.loadData(analyzer, events, sentiments, context)
+        print('Eventos de escucha cargados: ' +
+              str(controller.eventsSize(analyzer)))
+        print('Artistas únicos cargardos: ' +
+              str(controller.artistsSize(analyzer)))
+        print('Pistas de audio únicas cargadas: ' +
+              str(controller.indexSize(analyzer)))
+        print('5 primeros eventos:')
+        for i in range(1,6):
+            print(dict(lt.getElement(analyzer['events'], i)))
+        print('5 ultimos eventos:')
+        for i in range(-5, 0):
+            print(dict(lt.getElement(analyzer['events'], i)))
     else:
         sys.exit(0)
 sys.exit(0)

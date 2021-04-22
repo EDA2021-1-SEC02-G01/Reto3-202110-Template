@@ -29,10 +29,78 @@ import csv
 El controlador se encarga de mediar entre la vista y el modelo.
 """
 
-# Inicialización del Catálogo de libros
+
+# Inicialización del Catálogo de pistas musicales
+def init():
+    """
+    Llama la funcion de inicializacion  del modelo.
+    """
+    # catalog es utilizado para interactuar con el modelo
+    analyzer = model.newAnalyzer()
+    return analyzer
+
 
 # Funciones para la carga de datos
+
+def loadData(analyzer, events, sentiments, context):
+    """
+    Carga los datos de los archivos CSV en el modelo
+    """
+    eventsfile = cf.data_dir + events
+    events_file = csv.DictReader(open(eventsfile, encoding="utf-8"),
+                                 delimiter=",")
+    contextfile = cf.data_dir + context
+    context_file = csv.DictReader(open(contextfile, encoding="utf-8"),
+                                  delimiter=",")
+    for feature in context_file:
+        model.addFeature(analyzer, feature)
+
+    for event in events_file:
+        model.addEvent(analyzer, event)
+
+    sentimentsfile = cf.data_dir + sentiments
+    sentiments_file = csv.DictReader(open(sentimentsfile, encoding="utf-8"),
+                                     delimiter=",")
+    for sentiment in sentiments_file:
+        model.addSentiment(analyzer, sentiment)
+    return analyzer
+
 
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+
+def eventsSize(analyzer):
+    return model.eventsSize(analyzer)
+
+
+def artistsSize(analyzer):
+    return model.artistsSize(analyzer)
+
+
+def indexHeight(analyzer):
+    """
+    Altura del indice (arbol)
+    """
+    return model.indexHeight(analyzer)
+
+
+def indexSize(analyzer):
+    """
+    Numero de nodos en el arbol
+    """
+    return model.indexSize(analyzer)
+
+
+def minKey(analyzer):
+    """
+    La menor llave del arbol
+    """
+    return model.minKey(analyzer)
+
+
+def maxKey(analyzer):
+    """
+    La mayor llave del arbol
+    """
+    return model.maxKey(analyzer)
