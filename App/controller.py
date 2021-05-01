@@ -67,6 +67,9 @@ def loadData(analyzer, events, sentiments, context):
 
 
 # Funciones de ordenamiento
+def Req1(analyzer, caracteristica, limInf, limSup):
+    return model.Req1(analyzer, caracteristica, limInf, limSup)
+
 
 # Funciones de consulta sobre el catálogo
 

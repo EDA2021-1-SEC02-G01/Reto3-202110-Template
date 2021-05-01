@@ -54,19 +54,43 @@ def newAnalyzer():
     """
     analyzer = {'events': None,
                 'dateIndex': None,
+                'sentiments': None,
                 'content': None,
                 'artists': None,
-                'unique-tracks': None
+                'tracks': None
                 }
 
-    analyzer['events'] = lt.newList('ARRAY_LIST')
     analyzer['dateIndex'] = om.newMap(omaptype='RBT',comparefunction=compareDates)
+
     analyzer['sentiments'] = om.newMap(omaptype='RBT',
                                        comparefunction=None)
-    analyzer['content'] = om.newMap(omaptype='RBT')
-    analyzer['BPM'] = om.newMap(omaptype='RBT')
+
+    analyzer['content'] = mp.newMap(maptype='PROBING')
+    instrumentalnessTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'instrumentalness', instrumentalnessTree)
+    livenessTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'liveness', livenessTree)
+    speechinessTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'speechiness', speechinessTree)
+    danceabilityTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'danceability', danceabilityTree)
+    valenceTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'valence', valenceTree)
+    loudnessTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'loudness', loudnessTree)
+    tempoTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'tempo', tempoTree)
+    acousticnessTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'acousticness', acousticnessTree)
+    energyTree = om.newMap(comparefunction=compareValues)
+    mp.put(analyzer['content'], 'energy', energyTree)
+
+    analyzer['track_id'] = om.newMap(omaptype='RBT')
+
     analyzer['artists'] = om.newMap(omaptype='RBT', comparefunction=compareIds1)
-    analyzer['tracks'] = lt.newList('ARRAY_LIST')
+
+    analyzer['created_at'] = lt.newMap(omaptype='RBT')
+
     return analyzer
 
 
@@ -85,7 +109,7 @@ def updateDateIndex(map, event):
     se crea.
     """
     occurreddate = event['created_at']
-    eventdate = datetime.datetime.strptime(occurreddate, '%d-%m-%y %H:%M')
+    eventdate = datetime.datetime.strptime(occurreddate, '%y-%m-%d %H:%M:%S')
     entry = om.get(map, eventdate.date())
     if entry is None:
         dateEntry = newDataEntry(event)
@@ -114,8 +138,23 @@ def newDataEntry(event):
 
 def addFeature(analyzer, feature):
     lt.addLast(analyzer['tracks'], feature)
-    updateBPMIndex(analyzer['BPM'], feature)
+    updateContent(analyzer['content'], feature)
     updateArtistIndex(analyzer['artists'], feature)
+
+
+def updateContent(content, feature):
+    llaves = mp.keySet(analyzer)
+    for llave in llaves:
+        entry = mp.get(content, llave)
+        arbol = me.getValue(entry)
+        dataEntry = om.get(arbol, float(feature[llave]))
+        if dataEntry is None:
+            listadeFeatures = lt.newList('ARRAY_LIST')
+            om.put(arbol, float(feature[llave]), listadeFeatures)
+        else:
+            listadeFeatures = me.getValue(dataEntry)
+        lt.addLast(listadeFeatures, feature)
+    
 
 
 def updateArtistIndex(map, feature):
@@ -215,6 +254,18 @@ def compareIds2(id1, id2):
     return id1>id2['key']
 
 
+def compareValues(value1, value2):
+    """
+    Compara dos valores
+    """
+    if (value1 == value2):
+        return 0
+    elif (value1 > value2):
+        return 1
+    else:
+        return -1
+
+
 def compareDates(date1, date2):
     """
     Compara dos fechas
@@ -227,3 +278,12 @@ def compareDates(date1, date2):
         return -1
 
 # Funciones de ordenamiento
+
+def Req1(analyzer, caracteristica, limInf, limSup):
+    entry = mp.get(analyzer['content'], caracteristica)
+    arbol = me.getValue(entry)
+    if arbol is not None:
+        valores = om.values(arbol, limInf, limSup)
+        for valor in valores:
+            mp.valueSet(valor)
+        

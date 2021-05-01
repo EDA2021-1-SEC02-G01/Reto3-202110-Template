@@ -75,6 +75,13 @@ while True:
         print('5 ultimos eventos:')
         for i in range(-5, 0):
             print(dict(lt.getElement(analyzer['events'], i)))
+    elif int(inputs[0]) == 3:
+        caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
+        limInf = float(input("Ingrese el limite inferior: "))
+        limSup = float(input("Ingrese el limite superior: "))
+        print(f"{caracteristica} is between {limInf} and {limSup}")
+        totalRepro, totalArtists = controller.Req1(analyzer, caracteristica, limInf, limSup)
+        print(f"Total Reproductions: {")
     else:
         sys.exit(0)
 sys.exit(0)
