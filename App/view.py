@@ -23,6 +23,7 @@
 import config as cf
 import sys
 import controller
+from DISClib.DataStructures import mapentry as me
 from DISClib.ADT import orderedmap as om
 from DISClib.ADT import list as lt
 assert cf
@@ -71,13 +72,25 @@ while True:
         print('Pistas de audio únicas cargadas: ' +
               str(controller.indexSize(analyzer)))
         print('5 primeros eventos:')
-        llaves = list(om.keySet(analyzer['events']))
-        print(llaves)
-        for llave in llaves[:5]:
-            print(dict(om.get(analyzer['events'], llave)))
+        firstEvents = controller.firstEvents(analyzer)
+        for entry in lt.iterator(firstEvents):
+            event = dict(me.getValue(entry))
+            track_id = event["track_id"]
+            user_id = event["artist_id"]
+            event_id = event["id"]
+            print(f"Track Id: {track_id}, " +
+                  f"Artist Id: {user_id}, " +
+                  f"Event Id: {user_id}")
         print('5 ultimos eventos:')
-        for llave in llaves[-5:]:
-            print(dict(om.get(analyzer['events'], llave)))
+        lastEvents = controller.lastEvents(analyzer)
+        for entry in lt.iterator(lastEvents):
+            event = dict(me.getValue(entry))
+            track_id = event["track_id"]
+            user_id = event["artist_id"]
+            event_id = event["id"]
+            print(f"Track Id: {track_id}, " +
+                  f"Artist Id: {user_id}, " +
+                  f"Event Id: {user_id}")
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))

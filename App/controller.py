@@ -108,3 +108,17 @@ def maxKey(analyzer):
     La mayor llave del arbol
     """
     return model.maxKey(analyzer)
+
+
+def firstEvents(analyzer):
+    """
+    Los 5 primeros eventos
+    """
+    return model.firstEvents(analyzer)
+
+
+def lastEvents(analyzer):
+    """
+    Los 5 ultimos eventos
+    """
+    return model.lastEvents(analyzer)

@@ -133,13 +133,12 @@ def updateDateIndex(index, event):
     lt.addLast(dateEntry, event)
 
 
-def updateEventIndex(map, event):
+def updateEventIndex(index, event):
     """
     Agrega cada uno de los events al e
     """
     id = event['id']
-    entry = om.get(map, id)
-    om.put(map, id, entry)
+    om.put(index, id, event)
 
 
 def updateTrackIdIndex(index, event):
@@ -267,6 +266,28 @@ def maxKey(analyzer):
     Llave mas grande
     """
     return om.maxKey(analyzer['dateIndex'])
+
+
+def firstEvents(analyzer):
+    key_set = om.keySet(analyzer["events"]) 
+    sub_list = lt.subList(key_set, 1, 5)
+    firstEvents = lt.newList()
+    for key in lt.iterator(sub_list):
+        event = om.get(analyzer["events"], key)
+        lt.addLast(firstEvents,event)
+    return firstEvents
+
+
+def lastEvents(analyzer):
+    key_set = om.keySet(analyzer["events"])
+    numelem = eventsSize(analyzer)
+    sub_list = lt.subList(key_set, numelem-5,5)
+    lastEvents = lt.newList()
+    for key in lt.iterator(sub_list):
+        event = om.get(analyzer["events"], key)
+        lt.addLast(lastEvents,event)
+    return lastEvents
+
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 
