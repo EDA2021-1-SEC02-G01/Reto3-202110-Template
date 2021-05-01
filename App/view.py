@@ -81,7 +81,7 @@ while True:
         limSup = float(input("Ingrese el limite superior: "))
         print(f"{caracteristica} is between {limInf} and {limSup}")
         totalRepro, totalArtists = controller.Req1(analyzer, caracteristica, limInf, limSup)
-        print(f"Total Reproductions: {")
+        print(f"Total Reproductions: {}")
     else:
         sys.exit(0)
 sys.exit(0)

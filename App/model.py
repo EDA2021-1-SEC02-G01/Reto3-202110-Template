@@ -66,24 +66,35 @@ def newAnalyzer():
                                        comparefunction=None)
 
     analyzer['content'] = mp.newMap(maptype='PROBING')
+    #Instrumentalness: Crea un tree con los valores
     instrumentalnessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'instrumentalness', instrumentalnessTree)
+    #Liveness: Crea un tree con los valores
     livenessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'liveness', livenessTree)
+    #Speechiness: Crea un tree con los valores
     speechinessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'speechiness', speechinessTree)
+    #Danceability: Crea un tree con los valores
     danceabilityTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'danceability', danceabilityTree)
+    #Valence: Crea un tree con los valores
     valenceTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'valence', valenceTree)
+    #Loudness: Crea un tree con los valores
     loudnessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'loudness', loudnessTree)
+    #Tempo: Crea un tree con los valores
     tempoTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'tempo', tempoTree)
+    #Acousticness: Crea un tree con los valores
     acousticnessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'acousticness', acousticnessTree)
+    #Energy: Crea un tree con los valores
     energyTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'energy', energyTree)
+
+    analyzer['events'] = om.newMap(omaptype='RBT', comparefunction=compareIds1)
 
     analyzer['track_id'] = om.newMap(omaptype='RBT')
 
@@ -96,11 +107,14 @@ def newAnalyzer():
 
 # Funciones para agregar informacion al catalogo
 def addEvent(analyzer, event):
-    lt.addLast(analyzer['events'], event)
+    """
+    Agrega un evento a la lista de eventos del catalogo
+    """
+    updateEventIndex(analyzer['events'], event)
     updateDateIndex(analyzer['dateIndex'], event)
     
 
-def updateDateIndex(map, event):
+def updateDateIndex(index, event):
     """
     Se toma la fecha del evento y se busca si ya existe en el arbol
     dicha fecha. Si es así, se adiciona a su lista de eventos.
@@ -110,19 +124,35 @@ def updateDateIndex(map, event):
     """
     occurreddate = event['created_at']
     eventdate = datetime.datetime.strptime(occurreddate, '%y-%m-%d %H:%M:%S')
-    entry = om.get(map, eventdate.date())
+    entry = om.get(index, eventdate.date())
     if entry is None:
         dateEntry = newDataEntry(event)
-        om.put(map, eventdate.date(), dateEntry)
+        om.put(index, eventdate.date(), dateEntry)
     else:
         dateEntry = me.getValue(entry)
     addDateIndex(dateEntry, event)
+    return index
+
+
+def updateEventIndex(map, event):
+    """
+    Agrega cada uno de los events al e
+    """
+    id = event['id']
+    entry = om.get(map, id)
+    om.put(map, id, entry)
 
 
 def addDateIndex(dateEntry, event):
     """
-    Actualiza el map para la fecha respectiva
+    Actualiza un indice de tipo de eventos.  Este indice tiene una lista
+    de eventos y una tabla de hash cuya llave es el tipo de evento y
+    el valor es una lista con los eventos de dicho tipo en la fecha que
+    se está consultando (dada por el nodo del arbol)
     """
+    lst = dateEntry['events']
+    lt.addLast(lst, event)
+
     track_id = event['track_id']
     mp.put(dateEntry, track_id, event)
 
@@ -132,7 +162,8 @@ def newDataEntry(event):
     Crea una entrada en el indice por fechas, es decir en el arbol
     binario.
     """
-    entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
+    entry = {'events': None, }
+    mp.newMap(maptype='PROBING', comparefunction=compareIds2)
     return entry
 
 
@@ -168,12 +199,12 @@ def addSentiment(analyzer, sentiment):
 
 def updateBPMIndex(map, feature):
     """
-    Se toma la fecha del crimen y se busca si ya existe en el arbol
-    dicha fecha.  Si es asi, se adiciona a su lista de crimenes
-    y se actualiza el indice de tipos de crimenes.
+    Se toma el tempo y se busca si ya existe en el arbol
+    dicho tempo.  Si es asi, se adiciona a su lista de tempos
+    y se actualiza el indice de tipos de tempos.
 
-    Si no se encuentra creado un nodo para esa fecha en el arbol
-    se crea y se actualiza el indice de tipos de crimenes
+    Si no se encuentra creado un nodo para ese tempo en el arbol,
+    se crea y se actualiza el indice de tipos de tempos.
     """
     tempo = round(float(feature['tempo']))
     tempoExists = om.contains(map, tempo)
@@ -237,7 +268,7 @@ def maxKey(analyzer):
 
 def compareIds1(id1, id2):
     """
-    Compara dos eventos
+    Compara dos eventos para un arbol
     """
     if (id1 == id2):
         return 0
@@ -249,7 +280,7 @@ def compareIds1(id1, id2):
 
 def compareIds2(id1, id2):
     """
-    Compara dos eventos
+    Compara dos eventos para una lista
     """
     return id1>id2['key']
 
