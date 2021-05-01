@@ -23,6 +23,7 @@
 import config as cf
 import sys
 import controller
+from DISClib.ADT import orderedmap as om
 from DISClib.ADT import list as lt
 assert cf
 
@@ -36,15 +37,15 @@ operación solicitada
 
 
 def printMenu():
-    print("="*26)
-    print("="*10 + " Reto " + "="*10)
-    print("="*26)
+    print("="*28)
+    print("="*10 + " Reto 3 " + "="*10)
+    print("="*28)
     print("1- Inicializar catálogo")
     print("2- Cargar información en el catálogo")
-    print("X- Presione cualquier otra tecla para salir")
+    print("0- Presione cualquier otra tecla para salir")
 
 
-events = 'user_track_hashtag_timestamp-small.csv'
+hashtag = 'user_track_hashtag_timestamp-small.csv'
 sentiments = 'sentiment_values.csv'
 context = 'context_content_features-small.csv'
 catalog = None
@@ -62,7 +63,7 @@ while True:
 
     elif int(inputs[0]) == 2:
         print("Cargando información de los archivos ...\n")
-        controller.loadData(analyzer, events, sentiments, context)
+        controller.loadData(analyzer, hashtag, sentiments, context)
         print('Eventos de escucha cargados: ' +
               str(controller.eventsSize(analyzer)))
         print('Artistas únicos cargardos: ' +
@@ -70,18 +71,20 @@ while True:
         print('Pistas de audio únicas cargadas: ' +
               str(controller.indexSize(analyzer)))
         print('5 primeros eventos:')
-        for i in range(1,6):
-            print(dict(lt.getElement(analyzer['events'], i)))
+        llaves = list(om.keySet(analyzer['events']))
+        print(llaves)
+        for llave in llaves[:5]:
+            print(dict(om.get(analyzer['events'], llave)))
         print('5 ultimos eventos:')
-        for i in range(-5, 0):
-            print(dict(lt.getElement(analyzer['events'], i)))
+        for llave in llaves[-5:]:
+            print(dict(om.get(analyzer['events'], llave)))
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))
         limSup = float(input("Ingrese el limite superior: "))
         print(f"{caracteristica} is between {limInf} and {limSup}")
         totalRepro, totalArtists = controller.Req1(analyzer, caracteristica, limInf, limSup)
-        print(f"Total Reproductions: {}")
+        print(f"Total Reproductions: {totalRepro}")
     else:
         sys.exit(0)
 sys.exit(0)

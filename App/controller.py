@@ -42,20 +42,20 @@ def init():
 
 # Funciones para la carga de datos
 
-def loadData(analyzer, events, sentiments, context):
+def loadData(analyzer, hashtag, sentiments, context):
     """
     Carga los datos de los archivos CSV en el modelo
     """
-    eventsfile = cf.data_dir + events
-    events_file = csv.DictReader(open(eventsfile, encoding="utf-8"),
+    hashtagsfile = cf.data_dir + hashtag
+    hashtag_file = csv.DictReader(open(hashtagsfile, encoding="utf-8"),
                                  delimiter=",")
     contextfile = cf.data_dir + context
     context_file = csv.DictReader(open(contextfile, encoding="utf-8"),
                                   delimiter=",")
-    for feature in context_file:
+    for feature in hashtag_file:
         model.addFeature(analyzer, feature)
 
-    for event in events_file:
+    for event in context_file:
         model.addEvent(analyzer, event)
 
     sentimentsfile = cf.data_dir + sentiments

@@ -56,8 +56,6 @@ def newAnalyzer():
                 'dateIndex': None,
                 'sentiments': None,
                 'content': None,
-                'artists': None,
-                'tracks': None
                 }
 
     analyzer['dateIndex'] = om.newMap(omaptype='RBT',comparefunction=compareDates)
@@ -100,7 +98,7 @@ def newAnalyzer():
 
     analyzer['artists'] = om.newMap(omaptype='RBT', comparefunction=compareIds1)
 
-    analyzer['created_at'] = lt.newMap(omaptype='RBT')
+    analyzer['created_at'] = om.newMap(omaptype='RBT')
 
     return analyzer
 
@@ -112,6 +110,8 @@ def addEvent(analyzer, event):
     """
     updateEventIndex(analyzer['events'], event)
     updateDateIndex(analyzer['dateIndex'], event)
+    updateArtistIdIndex(analyzer['artists'], event)
+    updateTrackIdIndex(analyzer['track_id'], event)
     
 
 def updateDateIndex(index, event):
@@ -123,15 +123,14 @@ def updateDateIndex(index, event):
     se crea.
     """
     occurreddate = event['created_at']
-    eventdate = datetime.datetime.strptime(occurreddate, '%y-%m-%d %H:%M:%S')
+    eventdate = datetime.datetime.strptime(occurreddate, '%Y-%m-%d %H:%M:%S')
     entry = om.get(index, eventdate.date())
     if entry is None:
-        dateEntry = newDataEntry(event)
+        dateEntry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
         om.put(index, eventdate.date(), dateEntry)
     else:
         dateEntry = me.getValue(entry)
-    addDateIndex(dateEntry, event)
-    return index
+    lt.addLast(dateEntry, event)
 
 
 def updateEventIndex(map, event):
@@ -143,34 +142,39 @@ def updateEventIndex(map, event):
     om.put(map, id, entry)
 
 
-def addDateIndex(dateEntry, event):
+def updateTrackIdIndex(index, event):
     """
-    Actualiza un indice de tipo de eventos.  Este indice tiene una lista
-    de eventos y una tabla de hash cuya llave es el tipo de evento y
-    el valor es una lista con los eventos de dicho tipo en la fecha que
-    se está consultando (dada por el nodo del arbol)
+    Crea un indice con los track_id
     """
-    lst = dateEntry['events']
-    lt.addLast(lst, event)
-
     track_id = event['track_id']
-    mp.put(dateEntry, track_id, event)
+    entry = om.get(index, track_id)
+    if entry is None:
+        track_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
+        om.put(index, track_id, track_entry)
+    else:
+        track_entry = me.getValue(entry)
+    lt.addLast(track_entry, event)
 
 
-def newDataEntry(event):
+def updateArtistIdIndex(index, event):
     """
-    Crea una entrada en el indice por fechas, es decir en el arbol
-    binario.
+    Crea un indice con los artist_id
     """
-    entry = {'events': None, }
-    mp.newMap(maptype='PROBING', comparefunction=compareIds2)
-    return entry
-
+    artist_id = event['artist_id']
+    entry = om.get(index, artist_id)
+    if entry is None:
+        artist_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
+        om.put(index, artist_id, artist_entry)
+    else:
+        artist_entry = me.getValue(entry)
+    lt.addLast(artist_entry, event)
+    
 
 def addFeature(analyzer, feature):
-    lt.addLast(analyzer['tracks'], feature)
-    updateContent(analyzer['content'], feature)
-    updateArtistIndex(analyzer['artists'], feature)
+    #lt.addLast(analyzer['tracks'], feature)
+    #updateContent(analyzer['content'], feature)
+    #updateArtistIndex(analyzer['artists'], feature)
+    pass
 
 
 def updateContent(content, feature):
@@ -227,7 +231,7 @@ def eventsSize(analyzer):
     """
     Número de eventos de escucha cargados
     """
-    return lt.size(analyzer['events'])
+    return om.size(analyzer['events'])
 
 
 def artistsSize(analyzer):
@@ -248,7 +252,7 @@ def indexSize(analyzer):
     """
     Numero de elementos en el indice
     """
-    return lt.size(analyzer['tracks'])
+    return om.size(analyzer['track_id'])
 
 
 def minKey(analyzer):
@@ -270,9 +274,9 @@ def compareIds1(id1, id2):
     """
     Compara dos eventos para un arbol
     """
-    if (id1 == id2):
+    if (str(id1) == str(id2)):
         return 0
-    elif id1 > id2:
+    elif str(id1) > str(id2):
         return 1
     else:
         return -1
