@@ -63,7 +63,7 @@ def newAnalyzer():
     analyzer['sentiments'] = om.newMap(omaptype='RBT',
                                        comparefunction=None)
 
-    analyzer['content'] = mp.newMap(maptype='PROBING')
+    analyzer['content'] = mp.newMap(maptype="PROBING")
     #Instrumentalness: Crea un tree con los valores
     instrumentalnessTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'instrumentalness', instrumentalnessTree)
@@ -108,10 +108,12 @@ def addEvent(analyzer, event):
     """
     Agrega un evento a la lista de eventos del catalogo
     """
-    updateEventIndex(analyzer['events'], event)
+    #updateEventIndex(analyzer['events'], event)
+    om.put(analyzer["events"], event["id"], event)
     updateDateIndex(analyzer['dateIndex'], event)
     updateArtistIdIndex(analyzer['artists'], event)
     updateTrackIdIndex(analyzer['track_id'], event)
+    updateFeatures(analyzer["content"], event)
     
 
 def updateDateIndex(index, event):
@@ -131,14 +133,6 @@ def updateDateIndex(index, event):
     else:
         dateEntry = me.getValue(entry)
     lt.addLast(dateEntry, event)
-
-
-def updateEventIndex(index, event):
-    """
-    Agrega cada uno de los events al e
-    """
-    id = event['id']
-    om.put(index, id, event)
 
 
 def updateTrackIdIndex(index, event):
@@ -167,58 +161,37 @@ def updateArtistIdIndex(index, event):
     else:
         artist_entry = me.getValue(entry)
     lt.addLast(artist_entry, event)
-    
-
-def addFeature(analyzer, feature):
-    #lt.addLast(analyzer['tracks'], feature)
-    #updateContent(analyzer['content'], feature)
-    #updateArtistIndex(analyzer['artists'], feature)
-    pass
 
 
-def updateContent(content, feature):
-    llaves = mp.keySet(analyzer)
-    for llave in llaves:
-        entry = mp.get(content, llave)
-        arbol = me.getValue(entry)
-        dataEntry = om.get(arbol, float(feature[llave]))
-        if dataEntry is None:
-            listadeFeatures = lt.newList('ARRAY_LIST')
-            om.put(arbol, float(feature[llave]), listadeFeatures)
+def updateFeatures(index, event):
+    features = ["instrumentalness",
+                "liveness",
+                "speechiness",
+                "danceability",
+                "valence",
+                "loudness",
+                "tempo",
+                "acousticness",
+                "energy"]
+    for feature in features:
+        tree_entry = mp.get(index, feature)
+        tree = me.getValue(tree_entry)
+        event_value = float(event[feature])
+        entry = om.get(tree, event_value)
+        if entry is None:
+            feature_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
+            om.put(tree, event_value, feature_entry)
         else:
-            listadeFeatures = me.getValue(dataEntry)
-        lt.addLast(listadeFeatures, feature)
-    
+            feature_entry = me.getValue(entry)
+        lt.addLast(feature_entry, event)
 
 
-def updateArtistIndex(map, feature):
-    artist_id = feature['artist_id']
-    om.put(map, artist_id, feature)
+def addHashtag(analyzer, feature):
+    pass
 
 
 def addSentiment(analyzer, sentiment):
     pass
-
-
-def updateBPMIndex(map, feature):
-    """
-    Se toma el tempo y se busca si ya existe en el arbol
-    dicho tempo.  Si es asi, se adiciona a su lista de tempos
-    y se actualiza el indice de tipos de tempos.
-
-    Si no se encuentra creado un nodo para ese tempo en el arbol,
-    se crea y se actualiza el indice de tipos de tempos.
-    """
-    tempo = round(float(feature['tempo']))
-    tempoExists = om.contains(map, tempo)
-    if tempoExists:
-        entry = om.get(map, tempo)
-        tracksForTempo = me.getValue(entry)
-    else:
-        tracksForTempo = mp.newMap()
-        om.put(map, tempo, tracksForTempo)
-    mp.put(tracksForTempo, feature['track_id'], feature)
-    return map
 
 
 # Funciones para creacion de datos
@@ -289,6 +262,25 @@ def lastEvents(analyzer):
     return lastEvents
 
 
+def Req1(analyzer, caracteristica, limInf, limSup):
+    entry = mp.get(analyzer['content'], caracteristica)
+    arbol = me.getValue(entry)
+    if arbol is not None:
+        totalRepro = 0
+        valores = om.values(arbol, limInf, limSup)
+        arbol_artistas = om.newMap(omaptype="RBT")
+        for valor in lt.iterator(valores):
+            for evento in lt.iterator(valor):
+                totalRepro += 1
+                nombre_artista = evento["artist_id"]
+                existe = om.get(arbol_artistas, nombre_artista)
+                if existe is None:
+                    om.put(arbol_artistas, nombre_artista, nombre_artista)
+        lista_artistas = om.keySet(arbol_artistas)
+        numArtistas = lt.size(lista_artistas)
+        return totalRepro, numArtistas
+    return None
+
 # Funciones utilizadas para comparar elementos dentro de una lista
 
 def compareIds1(id1, id2):
@@ -334,12 +326,4 @@ def compareDates(date1, date2):
         return -1
 
 # Funciones de ordenamiento
-
-def Req1(analyzer, caracteristica, limInf, limSup):
-    entry = mp.get(analyzer['content'], caracteristica)
-    arbol = me.getValue(entry)
-    if arbol is not None:
-        valores = om.values(arbol, limInf, limSup)
-        for valor in valores:
-            mp.valueSet(valor)
-        
+       

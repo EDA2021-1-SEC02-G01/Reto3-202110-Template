@@ -53,7 +53,7 @@ def loadData(analyzer, hashtag, sentiments, context):
     context_file = csv.DictReader(open(contextfile, encoding="utf-8"),
                                   delimiter=",")
     for feature in hashtag_file:
-        model.addFeature(analyzer, feature)
+        model.addHashtag(analyzer, feature)
 
     for event in context_file:
         model.addEvent(analyzer, event)

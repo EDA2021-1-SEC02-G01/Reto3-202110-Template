@@ -307,7 +307,7 @@ def values(map, keylo, keyhi):
         keylo: limite inferior
         keylohi: limite superiorr
     Returns:
-        Las llaves en el rago especificado
+        Las llaves en el rango especificado
     Raises:
         Exception
     """

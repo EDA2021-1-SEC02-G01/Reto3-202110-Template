@@ -43,6 +43,7 @@ def printMenu():
     print("="*28)
     print("1- Inicializar catálogo")
     print("2- Cargar información en el catálogo")
+    print("3- Requerimiento 1")
     print("0- Presione cualquier otra tecla para salir")
 
 
@@ -94,10 +95,13 @@ while True:
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))
-        limSup = float(input("Ingrese el limite superior: "))
-        print(f"{caracteristica} is between {limInf} and {limSup}")
-        totalRepro, totalArtists = controller.Req1(analyzer, caracteristica, limInf, limSup)
-        print(f"Total Reproductions: {totalRepro}")
+        limSup = float(input("Ingrese el limite superior: "))        
+        respuesta = controller.Req1(analyzer, caracteristica, limInf, limSup)
+        if respuesta is not None:
+            totalRepro, numArtistas = respuesta
+            print(f"{caracteristica} is between {limInf} and {limSup}")
+            print(f"Total Reproductions: {totalRepro}")
+            print(f"Total Unique Artists: {numArtistas}")
     else:
         sys.exit(0)
 sys.exit(0)
