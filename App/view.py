@@ -95,13 +95,16 @@ while True:
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))
-        limSup = float(input("Ingrese el limite superior: "))        
+        limSup = float(input("Ingrese el limite superior: "))   
+        print("Cargando la informacion...")   
+        print()  
         respuesta = controller.Req1(analyzer, caracteristica, limInf, limSup)
         if respuesta is not None:
             totalRepro, numArtistas = respuesta
             print(f"{caracteristica} is between {limInf} and {limSup}")
             print(f"Total Reproductions: {totalRepro}")
             print(f"Total Unique Artists: {numArtistas}")
+            print()
     else:
         sys.exit(0)
 sys.exit(0)
