@@ -72,6 +72,10 @@ def Req1(analyzer, caracteristica, limInf, limSup):
     return model.Req1(analyzer, caracteristica, limInf, limSup)
 
 
+def Req3(analyzer, limInf1, limSup1, limInf2, limSup2):
+    return model.Req3(analyzer, limInf1, limSup1, limInf2, limSup2)
+
+
 # Funciones de consulta sobre el catálogo
 
 def eventsSize(analyzer):
