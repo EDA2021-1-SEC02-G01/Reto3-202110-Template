@@ -129,11 +129,11 @@ def updateDateIndex(index, event):
     eventdate = datetime.datetime.strptime(occurreddate, '%Y-%m-%d %H:%M:%S')
     entry = om.get(index, eventdate.date())
     if entry is None:
-        dateEntry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
-        om.put(index, eventdate.date(), dateEntry)
+        eventList = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
+        om.put(index, eventdate.date(), eventList)
     else:
-        dateEntry = me.getValue(entry)
-    lt.addLast(dateEntry, event)
+        eventList = me.getValue(entry)
+    lt.addLast(eventList, event)
 
 
 def updateTrackIdIndex(index, event):
@@ -143,11 +143,11 @@ def updateTrackIdIndex(index, event):
     track_id = event['track_id']
     entry = om.get(index, track_id)
     if entry is None:
-        track_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
-        om.put(index, track_id, track_entry)
+        eventList = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
+        om.put(index, track_id, eventList)
     else:
-        track_entry = me.getValue(entry)
-    lt.addLast(track_entry, event)
+        eventList = me.getValue(entry)
+    lt.addLast(eventList, event)
 
 
 def updateArtistIdIndex(index, event):
@@ -157,11 +157,11 @@ def updateArtistIdIndex(index, event):
     artist_id = event['artist_id']
     entry = om.get(index, artist_id)
     if entry is None:
-        artist_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
-        om.put(index, artist_id, artist_entry)
+        eventList = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
+        om.put(index, artist_id, eventList)
     else:
-        artist_entry = me.getValue(entry)
-    lt.addLast(artist_entry, event)
+        eventList = me.getValue(entry)
+    lt.addLast(eventList, event)
 
 
 def updateFeatures(index, event):
@@ -180,11 +180,11 @@ def updateFeatures(index, event):
         event_value = float(event[feature])
         entry = om.get(tree, event_value)
         if entry is None:
-            feature_entry = mp.newMap(maptype='PROBING', comparefunction=compareIds2)
-            om.put(tree, event_value, feature_entry)
+            eventList = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
+            om.put(tree, event_value, eventList)
         else:
-            feature_entry = me.getValue(entry)
-        lt.addLast(feature_entry, event)
+            eventList = me.getValue(entry)
+        lt.addLast(eventList, event)
 
 
 def addHashtag(analyzer, feature):
@@ -264,23 +264,59 @@ def lastEvents(analyzer):
 
 
 def Req1(analyzer, caracteristica, limInf, limSup):
-    entry = mp.get(analyzer['content'], caracteristica)
-    arbol = me.getValue(entry)
-    if arbol is not None:
-        totalRepro = 0
-        valores = om.values(arbol, limInf, limSup)
-        arbol_artistas = om.newMap(omaptype="RBT")
-        for valor in lt.iterator(valores):
-            for evento in lt.iterator(valor):
-                totalRepro += 1
-                nombre_artista = evento["artist_id"]
-                existe = om.get(arbol_artistas, nombre_artista)
+    try:
+        entry = mp.get(analyzer['content'], caracteristica)
+        arbol = me.getValue(entry)
+        if arbol is not None:
+            totalRepro = 0
+            valores = om.values(arbol, limInf, limSup)
+            arbol_artistas = om.newMap(omaptype="RBT")
+            for lista in lt.iterator(valores):
+                for evento in lt.iterator(lista):
+                    totalRepro += 1
+                    nombre_artista = evento["artist_id"]
+                    existe = om.get(arbol_artistas, nombre_artista)
+                    if existe is None:
+                        om.put(arbol_artistas, nombre_artista, nombre_artista)
+            lista_artistas = om.keySet(arbol_artistas)
+            numArtistas = lt.size(lista_artistas)
+            return totalRepro, numArtistas
+    except Exception:
+        return None
+
+
+
+def Req3(analyzer, limInf1, limSup1, limInf2, limSup2):
+    try:
+        entry = mp.get(analyzer['content'], "instrumentalness")
+        arbolInstr = me.getValue(entry)
+        valoresInstr = om.values(arbolInstr, limInf1, limSup1)
+        arbol_Tempo = om.newMap(omaptype="RBT", comparefunction=compareValues)
+        for lista in lt.iterator(valoresInstr):
+            for evento in lt.iterator(lista):
+                tempo = float(evento["tempo"])
+                existe = om.get(arbol_Tempo, tempo)
                 if existe is None:
-                    om.put(arbol_artistas, nombre_artista, nombre_artista)
-        lista_artistas = om.keySet(arbol_artistas)
-        numArtistas = lt.size(lista_artistas)
-        return totalRepro, numArtistas
-    return None
+                    eventList = lt.newList("ARRAY_LIST", cmpfunction=compareValues)
+                    om.put(arbol_Tempo, evento["tempo"], eventList)
+                else:
+                    eventList = me.getValue(existe)
+                lt.addLast(eventList, evento)
+        valoresTempo = om.values(arbol_Tempo, limInf2, limSup2)
+        unique_tracks = mp.newMap(maptype="PROBING")
+        for lista in lt.iterator(valoresTempo):
+            for evento in lt.iterator(lista):
+                mp.put(unique_tracks, evento["track_id"], evento)
+        total_tracks = mp.valueSet(unique_tracks)
+        num_tracks = lt.size(total_tracks)
+        random5Tracks = lt.newList()
+        res = [random.randrange(1, num_tracks, 1) for i in range(5)]
+        for num in res:
+            eventoRandom = lt.getElement(total_tracks, num)
+            lt.addLast(random5Tracks, eventoRandom)
+        return num_tracks, random5Tracks
+    except Exception:
+        return None
 
 def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax):
     """
@@ -341,9 +377,9 @@ def compareValues(value1, value2):
     """
     Compara dos valores
     """
-    if (value1 == value2):
+    if (float(value1) == float(value2)):
         return 0
-    elif (value1 > value2):
+    elif (float(value1) > float(value2)):
         return 1
     else:
         return -1

@@ -45,6 +45,9 @@ def printMenu():
     print("2- Cargar información en el catálogo")
     print("3- Requerimiento 1: Caracterizar las reproducciones")
     print("4- Requerimiento 2: Encontrar musica para festejar")
+    print("5- Requerimiento 3: Encontrar muscia para estudiar")
+    print("6- Requerimiento 4: Estudiar los generos musicales")
+    print("7- Requerimiento 5: Indicar el genero musical mas esuchado en el tiempo")
     print("0- Presione cualquier otra tecla para salir")
 
 
@@ -104,9 +107,9 @@ while True:
         respuesta = controller.Req1(analyzer, caracteristica, limInf, limSup)
         if respuesta is not None:
             totalRepro, numArtistas = respuesta
+            print("+++++ Req No. 1 results... +++++")
             print(f"{caracteristica} is between {limInf} and {limSup}")
-            print(f"Total Reproductions: {totalRepro}")
-            print(f"Total Unique Artists: {numArtistas}")
+            print(f"Total Reproductions: {totalRepro}  |  Total Unique Artists: {numArtistas}")
             print()
     elif int(inputs[0]) == 4:
         energyMin = float(input("Ingrese el limite inferior de la caracteristica Energy: "))
@@ -128,6 +131,28 @@ while True:
             danceability = event["danceability"]
             print(f"Track {cuenta}: {track_id} with energy of {energy} and danceability of {danceability}")
             cuenta += 1
+    elif int(inputs[0]) == 5:
+        limInf1 = float(input("El valor mínimo del rango para Instrumentalness: "))
+        limSup1 = float(input("El valor máximo del rango para Instrumentalness: "))
+        limInf2 = float(input("El valor mínimo del rango para el Tempo: "))
+        limSup2 = float(input("El valor máximo del rango para el Tempo: "))
+        print("Cargando la informacion...")   
+        print() 
+        respuesta = controller.Req3(analyzer, limInf1, limSup1, limInf2, limSup2)
+        if respuesta is not None:
+            num_tracks, random5Tracks = respuesta
+            print(f"Instrumentalness is between {limInf1} and {limSup1}")
+            print(f"Tempo is between {limInf2} and {limSup2}")
+            print(f"Total unique tracks in events: {num_tracks}")
+            print()
+            print("--- Unique track_id ---")
+            cuenta = 1
+            for event in lt.iterator(random5Tracks):
+                track_id = event["track_id"]
+                instrumentalness = event["instrumentalness"]
+                tempo = event["tempo"]
+                print(f"Track {cuenta}: {track_id} with instrumentalness of {instrumentalness} and tempo of {tempo}")
+                cuenta += 1
     else:
         sys.exit(0)
 sys.exit(0)
