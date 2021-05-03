@@ -72,6 +72,10 @@ def Req1(analyzer, caracteristica, limInf, limSup):
     return model.Req1(analyzer, caracteristica, limInf, limSup)
 
 
+def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax):
+    return model.musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax)
+
+
 # Funciones de consulta sobre el catálogo
 
 def eventsSize(analyzer):

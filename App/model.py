@@ -27,6 +27,7 @@
 
 import config as cf
 import datetime
+import random
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.ADT import orderedmap as om
@@ -281,7 +282,41 @@ def Req1(analyzer, caracteristica, limInf, limSup):
         return totalRepro, numArtistas
     return None
 
+def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax):
+    """
+    Requerimiento 2: Encontrar musica para festejar
+    """
+    entry = mp.get(analyzer['content'], 'energy')
+    arbolEnergy = me.getValue(entry)
+    valoresEnergy = om.values(arbolEnergy, energyMin, energyMax)
+    arbolDance = om.newMap(omaptype='RBT', comparefunction=compareValues)
+    for valor in lt.iterator(valoresEnergy):
+        for evento in lt.iterator(valor):
+            dance = float(evento['danceability'])
+            existe = om.get(arbolDance, dance)
+            if existe is None:
+                eventList = lt.newList('ARRAY_LIST', cmpfunction=compareValues)
+                om.put(arbolDance, dance, eventList)
+            else:
+                eventList = me.getValue(existe)
+            lt.addLast(eventList, evento)
+    valoresDance = om.values(arbolDance, danceabilityMin, danceabilityMax)
+    tracks_unicas = mp.newMap(maptype='PROBING')
+    for lista in lt.iterator(valoresDance):
+        for evento in lt.iterator(lista):
+            mp.put(tracks_unicas, evento['track_id'], evento)
+    listaUnicas = mp.valueSet(tracks_unicas)
+    num_tracks = lt.size(listaUnicas)
+    res = [random.randrange(1, num_tracks, 1) for i in range(5)]
+    random_tracks = lt.newList('ARRAY_LIST')
+    for numero in res:
+        chosen_track = lt.getElement(listaUnicas, numero)
+        lt.addLast(random_tracks, chosen_track)
+    return num_tracks, random_tracks
+
+
 # Funciones utilizadas para comparar elementos dentro de una lista
+
 
 def compareIds1(id1, id2):
     """

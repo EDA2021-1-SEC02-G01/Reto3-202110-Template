@@ -43,7 +43,8 @@ def printMenu():
     print("="*28)
     print("1- Inicializar catálogo")
     print("2- Cargar información en el catálogo")
-    print("3- Requerimiento 1")
+    print("3- Requerimiento 1: Caracterizar las reproducciones")
+    print("4- Requerimiento 2: Encontrar musica para festejar")
     print("0- Presione cualquier otra tecla para salir")
 
 
@@ -72,6 +73,7 @@ while True:
               str(controller.artistsSize(analyzer)))
         print('Pistas de audio únicas cargadas: ' +
               str(controller.indexSize(analyzer)))
+        print()
         print('5 primeros eventos:')
         firstEvents = controller.firstEvents(analyzer)
         for entry in lt.iterator(firstEvents):
@@ -92,6 +94,7 @@ while True:
             print(f"Track Id: {track_id}, " +
                   f"Artist Id: {user_id}, " +
                   f"Event Id: {user_id}")
+        print()
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))
@@ -105,6 +108,26 @@ while True:
             print(f"Total Reproductions: {totalRepro}")
             print(f"Total Unique Artists: {numArtistas}")
             print()
+    elif int(inputs[0]) == 4:
+        energyMin = float(input("Ingrese el limite inferior de la caracteristica Energy: "))
+        energyMax = float(input("Ingrese el limite superior de la caracteristica Energy: "))
+        danceabilityMin = float(input("Ingrese el limite inferior de la caracteristica Danceability: "))
+        danceabilityMax = float(input("Ingrese el limite superior de la caracteristica Danceability: "))
+        print("Cargando informacion...")
+        print()
+        num_tracks, random_tracks = controller.musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax)
+        print(f"Energy is between {energyMin} and {energyMax}")
+        print(f"Danceability is between {danceabilityMin} and {danceabilityMax}")
+        print(f"Total de tracks en eventos: {num_tracks}")
+        print()
+        print("--- Unique track_id ---")
+        cuenta = 1
+        for event in lt.iterator(random_tracks):
+            track_id = event["track_id"]
+            energy = event["energy"]
+            danceability = event["danceability"]
+            print(f"Track {cuenta}: {track_id} with energy of {energy} and danceability of {danceability}")
+            cuenta += 1
     else:
         sys.exit(0)
 sys.exit(0)
