@@ -153,6 +153,42 @@ while True:
                 tempo = event["tempo"]
                 print(f"Track {cuenta}: {track_id} with instrumentalness of {instrumentalness} and tempo of {tempo}")
                 cuenta += 1
+    elif int(inputs[0]) == 6:
+        genre_list = ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]
+        print("Los generos más comunes son:")
+        for cosa in genre_list:
+            print(f"- {cosa}")
+        generos = input("Ingrese los generos que desea buscar separados por comas: ")
+        generos = generos.replace(" ", "").split(",")
+        total_Repro = 0
+        tuplas = []
+        for genero in generos:
+            if genero not in genre_list:
+                print(f"El genero {genero} no se encuentra en nuestros registros. Se creará {genero}")
+                minTempo = input(f"Ingrese el valor mínimo del Tempo para {genero}: ")
+                maxTempo = input(f"Ingrese el valor máximo del Tempo para {genero}: ") 
+                respuesta = controller.Req4(analyzer, genero, minTempo, maxTempo)
+            else:
+                respuesta = controller.Req4(analyzer, genero, None, None)
+            diezPrimeros, total_Artistas, genre_repro, minTempo, maxTempo = respuesta
+            info = (genero, diezPrimeros, total_Artistas, genre_repro, minTempo, maxTempo)
+            tuplas.append(info)
+            total_Repro += genre_repro
+        print()
+        print("+"*5 + " Req No. 4 Results... " + "+"*5)
+        print(f"Total reproductions: {total_Repro}")
+        print()
+        for info in tuplas:
+            genero, diezPrimeros, total_Artistas, genre_repro, minTempo, maxTempo = info
+            print("="*7 + f" {genero.upper()} " + "="*7)
+            print(f"For {genero} the tempo is between {minTempo} and {maxTempo} BPM")
+            print(f"{genero} reproductions: {genre_repro} with {total_Artistas} different artists")
+            print("-"*5 + f" Some artists for {genero}" + "-"*5)
+            cuenta = 1
+            for artista in lt.iterator(diezPrimeros):
+                print(f"Artist {cuenta}: {artista}")
+                cuenta += 1
+            print()
     else:
         sys.exit(0)
 sys.exit(0)

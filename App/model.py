@@ -351,6 +351,52 @@ def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceability
     return num_tracks, random_tracks
 
 
+def Req4(analyzer, genero, minTempo, maxTempo):
+    entry = mp.get(analyzer['content'], 'tempo')
+    arbolTempo = me.getValue(entry)
+    if genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
+        if genero == "Reggae":
+            pistas = om.values(arbolTempo, 60, 90)
+            minTempo = 60
+            maxTempo = 90
+        elif genero == "Down-tempo":
+            minTempo = 70
+            maxTempo = 100
+        elif genero == "Chill-out":
+            minTempo = 90
+            maxTempo = 120
+        elif genero == "Hip-hop":
+            minTempo = 85
+            maxTempo = 115
+        elif genero == "Jazz and Funk":
+            minTempo = 120
+            maxTempo = 125
+        elif genero == "Pop":
+            minTempo = 100
+            maxTempo = 130
+        elif genero == "R&B":
+            minTempo = 60
+            maxTempo = 80
+        elif genero == "Rock":
+            minTempo = 110
+            maxTempo = 140
+        elif genero == "Metal":
+            minTempo = 100
+            maxTempo = 160
+    pistas = om.values(arbolTempo, minTempo, maxTempo)
+    uniqueArtists = mp.newMap(maptype="PROBING")
+    lista_Repro = lt.newList("ARRAY_LIST")
+    for valor in lt.iterator(pistas):
+        for evento in lt.iterator(valor):
+            lt.addLast(lista_Repro, evento)
+            mp.put(uniqueArtists, evento["artist_id"], evento["artist_id"])
+    artistList = mp.valueSet(uniqueArtists)
+    total_Artistas = lt.size(artistList)
+    total_Repro = lt.size(lista_Repro)
+    diezPrimeros = lt.subList(artistList, 1, 10)
+    return diezPrimeros, total_Artistas, total_Repro, minTempo, maxTempo
+
+
 # Funciones utilizadas para comparar elementos dentro de una lista
 
 
