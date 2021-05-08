@@ -189,6 +189,14 @@ while True:
                 print(f"Artist {cuenta}: {artista}")
                 cuenta += 1
             print()
+    elif int(inputs[0]) == 7:
+        time1 = input("Ingrese el limite inferior del horario a buscar: ")
+        time2 = input("Ingrese el limite superior del horario a buscar: ")
+        respuesta = controller.Req5(analyzer, time1.strip(), time2.strip())
+        print()
+        print("+"*5 + " Req No. 5 Results... " + "+"*5)
+        print(f"There is a total of {respuesta} reproductions between {time1} and {time2}")
+        print()
     else:
         sys.exit(0)
 sys.exit(0)

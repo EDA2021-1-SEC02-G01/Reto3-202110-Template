@@ -59,8 +59,6 @@ def newAnalyzer():
                 'content': None,
                 }
 
-    analyzer['dateIndex'] = om.newMap(omaptype='RBT',comparefunction=compareDates)
-
     analyzer['sentiments'] = om.newMap(omaptype='RBT',
                                        comparefunction=None)
 
@@ -99,7 +97,9 @@ def newAnalyzer():
 
     analyzer['artists'] = om.newMap(omaptype='RBT', comparefunction=compareIds1)
 
-    analyzer['created_at'] = om.newMap(omaptype='RBT')
+    analyzer['created_at'] = om.newMap(omaptype='RBT', comparefunction=compareTime)
+
+    analyzer['created_at-hashtag'] = om.newMap(omaptype='RBT', comparefunction=compareTime)
 
     return analyzer
 
@@ -111,7 +111,7 @@ def addEvent(analyzer, event):
     """
     #updateEventIndex(analyzer['events'], event)
     om.put(analyzer["events"], event["id"], event)
-    updateDateIndex(analyzer['dateIndex'], event)
+    updateDateIndex(analyzer['created_at'], event)
     updateArtistIdIndex(analyzer['artists'], event)
     updateTrackIdIndex(analyzer['track_id'], event)
     updateFeatures(analyzer["content"], event)
@@ -127,10 +127,10 @@ def updateDateIndex(index, event):
     """
     occurreddate = event['created_at']
     eventdate = datetime.datetime.strptime(occurreddate, '%Y-%m-%d %H:%M:%S')
-    entry = om.get(index, eventdate.date())
+    entry = om.get(index, eventdate.time())
     if entry is None:
         eventList = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
-        om.put(index, eventdate.date(), eventList)
+        om.put(index, eventdate.time(), eventList)
     else:
         eventList = me.getValue(entry)
     lt.addLast(eventList, event)
@@ -188,7 +188,7 @@ def updateFeatures(index, event):
 
 
 def addHashtag(analyzer, feature):
-    pass
+    updateDateIndex(analyzer['created_at-hashtag'], feature)
 
 
 def addSentiment(analyzer, sentiment):
@@ -197,6 +197,40 @@ def addSentiment(analyzer, sentiment):
 
 # Funciones para creacion de datos
 
+def pistasPorGenero(analyzer, genero, minTempo, maxTempo):
+    entry = mp.get(analyzer['content'], 'tempo')
+    arbolTempo = me.getValue(entry)
+    if genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
+        if genero == "Reggae":
+            pistas = om.values(arbolTempo, 60, 90)
+            minTempo = 60
+            maxTempo = 90
+        elif genero == "Down-tempo":
+            minTempo = 70
+            maxTempo = 100
+        elif genero == "Chill-out":
+            minTempo = 90
+            maxTempo = 120
+        elif genero == "Hip-hop":
+            minTempo = 85
+            maxTempo = 115
+        elif genero == "Jazz and Funk":
+            minTempo = 120
+            maxTempo = 125
+        elif genero == "Pop":
+            minTempo = 100
+            maxTempo = 130
+        elif genero == "R&B":
+            minTempo = 60
+            maxTempo = 80
+        elif genero == "Rock":
+            minTempo = 110
+            maxTempo = 140
+        elif genero == "Metal":
+            minTempo = 100
+            maxTempo = 160
+    pistas = om.values(arbolTempo, minTempo, maxTempo)
+    return pistas
 
 # Funciones de consulta
 
@@ -352,38 +386,7 @@ def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceability
 
 
 def Req4(analyzer, genero, minTempo, maxTempo):
-    entry = mp.get(analyzer['content'], 'tempo')
-    arbolTempo = me.getValue(entry)
-    if genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
-        if genero == "Reggae":
-            pistas = om.values(arbolTempo, 60, 90)
-            minTempo = 60
-            maxTempo = 90
-        elif genero == "Down-tempo":
-            minTempo = 70
-            maxTempo = 100
-        elif genero == "Chill-out":
-            minTempo = 90
-            maxTempo = 120
-        elif genero == "Hip-hop":
-            minTempo = 85
-            maxTempo = 115
-        elif genero == "Jazz and Funk":
-            minTempo = 120
-            maxTempo = 125
-        elif genero == "Pop":
-            minTempo = 100
-            maxTempo = 130
-        elif genero == "R&B":
-            minTempo = 60
-            maxTempo = 80
-        elif genero == "Rock":
-            minTempo = 110
-            maxTempo = 140
-        elif genero == "Metal":
-            minTempo = 100
-            maxTempo = 160
-    pistas = om.values(arbolTempo, minTempo, maxTempo)
+    pistas = pistasPorGenero(analyzer, genero, minTempo, maxTempo)
     uniqueArtists = mp.newMap(maptype="PROBING")
     lista_Repro = lt.newList("ARRAY_LIST")
     for valor in lt.iterator(pistas):
@@ -395,6 +398,20 @@ def Req4(analyzer, genero, minTempo, maxTempo):
     total_Repro = lt.size(lista_Repro)
     diezPrimeros = lt.subList(artistList, 1, 10)
     return diezPrimeros, total_Artistas, total_Repro, minTempo, maxTempo
+
+
+def Req5(analyzer, time1, time2):
+    arbolHoras = analyzer["created_at"]
+    valoresHoras = om.values(arbolHoras, time1, time2)
+    eventosRangoHoras = lt.newList("ARRAY_LIST")
+    for lista in lt.iterator(valoresHoras):
+        for evento in lt.iterator(lista):
+            lt.addLast(eventosRangoHoras, evento)
+    mapaPorGenero = mp.newMap(maptype="PROBING")
+    for genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
+        pistas = pistasPorGenero(analyzer, genero, None, None)
+        
+    return lt.size(eventosRangoHoras)
 
 
 # Funciones utilizadas para comparar elementos dentro de una lista
@@ -431,13 +448,13 @@ def compareValues(value1, value2):
         return -1
 
 
-def compareDates(date1, date2):
+def compareTime(time1, time2):
     """
     Compara dos fechas
     """
-    if (date1 == date2):
+    if (time1 == time2):
         return 0
-    elif (date1 > date2):
+    elif (time1 > time2):
         return 1
     else:
         return -1
