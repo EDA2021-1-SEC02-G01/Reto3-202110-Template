@@ -346,11 +346,7 @@ def Req3(analyzer, limInf1, limSup1, limInf2, limSup2):
                 mp.put(unique_tracks, evento["track_id"], evento)
         total_tracks = mp.valueSet(unique_tracks)
         num_tracks = lt.size(total_tracks)
-        random5Tracks = lt.newList()
-        res = [random.randrange(1, num_tracks, 1) for i in range(5)]
-        for num in res:
-            eventoRandom = lt.getElement(total_tracks, num)
-            lt.addLast(random5Tracks, eventoRandom)
+        random5Tracks = lt.subList(total_tracks, random.randint(1, num_tracks-5), 5)
         return num_tracks, random5Tracks
     except Exception:
         return None
