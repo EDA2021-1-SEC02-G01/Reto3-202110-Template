@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.DataStructures import mapentry as me
+from DISClib.ADT import map as mp
 from DISClib.ADT import orderedmap as om
 from DISClib.ADT import list as lt
 assert cf
@@ -47,14 +48,13 @@ def printMenu():
     print("4- Requerimiento 2: Encontrar musica para festejar")
     print("5- Requerimiento 3: Encontrar muscia para estudiar")
     print("6- Requerimiento 4: Estudiar los generos musicales")
-    print("7- Requerimiento 5: Indicar el genero musical mas esuchado en el tiempo")
+    print("7- Requerimiento 5: Indicar el genero musical mas escuchado en el tiempo")
     print("0- Presione cualquier otra tecla para salir")
 
 
 hashtag = 'user_track_hashtag_timestamp-small.csv'
 sentiments = 'sentiment_values.csv'
 context = 'context_content_features-small.csv'
-catalog = None
 
 """
 Menu principal
@@ -69,28 +69,26 @@ while True:
 
     elif int(inputs[0]) == 2:
         print("Cargando información de los archivos ...\n")
-        controller.loadData(analyzer, hashtag, sentiments, context)
+        controller.loadData(analyzer, hashtag, sentiments, context) #Se cargan los archivos
         print('Eventos de escucha cargados: ' +
-              str(controller.eventsSize(analyzer)))
+              str(controller.eventsSize(analyzer))) #Se imprime el total de eventos cargados
         print('Artistas únicos cargardos: ' +
-              str(controller.artistsSize(analyzer)))
+              str(controller.artistsSize(analyzer))) #Se imprime el total de artistas unicos cargados
         print('Pistas de audio únicas cargadas: ' +
-              str(controller.indexSize(analyzer)))
+              str(controller.indexSize(analyzer))) #Se imprime el total de pistas de audio unicas
         print()
-        print('5 primeros eventos:')
+        print('5 primeros eventos:') #Se imprimen los 5 primeros eventos
         firstEvents = controller.firstEvents(analyzer)
-        for entry in lt.iterator(firstEvents):
-            event = dict(me.getValue(entry))
+        for event in lt.iterator(firstEvents):
             track_id = event["track_id"]
             user_id = event["artist_id"]
             event_id = event["id"]
             print(f"Track Id: {track_id}, " +
                   f"Artist Id: {user_id}, " +
                   f"Event Id: {user_id}")
-        print('5 ultimos eventos:')
+        print('5 ultimos eventos:') #Se imprimen los 5 ultimos eventos
         lastEvents = controller.lastEvents(analyzer)
-        for entry in lt.iterator(lastEvents):
-            event = dict(me.getValue(entry))
+        for event in lt.iterator(lastEvents):
             track_id = event["track_id"]
             user_id = event["artist_id"]
             event_id = event["id"]
@@ -192,11 +190,32 @@ while True:
     elif int(inputs[0]) == 7:
         time1 = input("Ingrese el limite inferior del horario a buscar: ")
         time2 = input("Ingrese el limite superior del horario a buscar: ")
-        respuesta = controller.Req5(analyzer, time1.strip(), time2.strip())
+        total_repro, mapaPorSize, totalUniqueTracks, sample = controller.Req5(analyzer, time1.strip(), time2.strip())
         print()
         print("+"*5 + " Req No. 5 Results... " + "+"*5)
-        print(f"There is a total of {respuesta} reproductions between {time1} and {time2}")
+        print(f"There is a total of {total_repro} reproductions between {time1} and {time2}")
+        print("="*25 + " GENRE SORTED REPRODUCTIONS " + "="*25)
+        i = 1
+        tamanioMapa = lt.size(om.keySet(mapaPorSize))
+        while i <= tamanioMapa:
+            mayor = om.maxKey(mapaPorSize)
+            entry = om.get(mapaPorSize, mayor)
+            genero = me.getValue(entry)
+            if i == 1:
+                primerGenero = genero
+            print(f"TOP {i}: {genero} with {mayor} reps")
+            om.deleteMax(mapaPorSize)
+            i += 1
+        print("...")
         print()
+        print("="*25 + f" {primerGenero} SENTIMENT ANALYSIS " + "="*25)
+        print(f"{primerGenero} has {totalUniqueTracks} unique tracks...")
+        print("10 random tracks by total hashtags are...")
+        i = 1
+        for info in lt.iterator(sample):
+            trackId, totalHt, vaderAvg = info
+            print(f"TOP {i} track: {trackId} with {totalHt} hashtags and VADER = {vaderAvg}")
+            i += 1
     else:
         sys.exit(0)
 sys.exit(0)

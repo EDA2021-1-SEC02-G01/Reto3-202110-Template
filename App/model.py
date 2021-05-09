@@ -28,6 +28,7 @@
 import config as cf
 import datetime
 import random
+import copy
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.ADT import orderedmap as om
@@ -59,8 +60,7 @@ def newAnalyzer():
                 'content': None,
                 }
 
-    analyzer['sentiments'] = om.newMap(omaptype='RBT',
-                                       comparefunction=None)
+    analyzer['sentiments'] = mp.newMap(maptype='PROBING')
 
     analyzer['content'] = mp.newMap(maptype="PROBING")
     #Instrumentalness: Crea un tree con los valores
@@ -91,7 +91,7 @@ def newAnalyzer():
     energyTree = om.newMap(comparefunction=compareValues)
     mp.put(analyzer['content'], 'energy', energyTree)
 
-    analyzer['events'] = om.newMap(omaptype='RBT', comparefunction=compareIds1)
+    analyzer['events'] = lt.newList("ARRAY_LIST", cmpfunction=compareIds2)
 
     analyzer['track_id'] = om.newMap(omaptype='RBT')
 
@@ -109,12 +109,37 @@ def addEvent(analyzer, event):
     """
     Agrega un evento a la lista de eventos del catalogo
     """
-    #updateEventIndex(analyzer['events'], event)
-    om.put(analyzer["events"], event["id"], event)
-    updateDateIndex(analyzer['created_at'], event)
-    updateArtistIdIndex(analyzer['artists'], event)
-    updateTrackIdIndex(analyzer['track_id'], event)
-    updateFeatures(analyzer["content"], event)
+    event["hashtag"] = lt.newList()
+    lt.addLast(analyzer["events"], event)
+
+
+def addHashtag(analyzer, feature, posEvent):
+    foundEvent = False
+    while not foundEvent and posEvent<lt.size(analyzer["events"]):
+        event = lt.getElement(analyzer["events"], posEvent)
+        if event['user_id'] == feature["user_id"] and event["track_id"] == feature["track_id"] and event["created_at"] == feature["created_at"]:
+            lt.addLast(event["hashtag"],feature["hashtag"].strip())
+            foundEvent = True
+        elif event["created_at"] > feature["created_at"]:
+            foundEvent = True
+        else:
+            posEvent += 1
+    return posEvent
+
+def addSentiment(analyzer, sentiment):
+    vader = None
+    if sentiment["vader_avg"] != "":
+        vader = float(sentiment["vader_avg"])
+    mp.put(analyzer["sentiments"], sentiment["hashtag"].lower(), vader)
+    
+
+def crearArboles(analyzer):
+    for event in lt.iterator(analyzer["events"]):
+        cevent = copy.copy(event)
+        updateDateIndex(analyzer['created_at'], cevent)
+        updateArtistIdIndex(analyzer['artists'], cevent)
+        updateTrackIdIndex(analyzer['track_id'], cevent)
+        updateFeatures(analyzer["content"], cevent)
     
 
 def updateDateIndex(index, event):
@@ -187,22 +212,11 @@ def updateFeatures(index, event):
         lt.addLast(eventList, event)
 
 
-def addHashtag(analyzer, feature):
-    updateDateIndex(analyzer['created_at-hashtag'], feature)
-
-
-def addSentiment(analyzer, sentiment):
-    pass
-
-
 # Funciones para creacion de datos
 
-def pistasPorGenero(analyzer, genero, minTempo, maxTempo):
-    entry = mp.get(analyzer['content'], 'tempo')
-    arbolTempo = me.getValue(entry)
+def pistasPorGenero(index, genero, minTempo, maxTempo):
     if genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
         if genero == "Reggae":
-            pistas = om.values(arbolTempo, 60, 90)
             minTempo = 60
             maxTempo = 90
         elif genero == "Down-tempo":
@@ -229,8 +243,8 @@ def pistasPorGenero(analyzer, genero, minTempo, maxTempo):
         elif genero == "Metal":
             minTempo = 100
             maxTempo = 160
-    pistas = om.values(arbolTempo, minTempo, maxTempo)
-    return pistas
+    pistas = om.values(index, minTempo, maxTempo)
+    return pistas, minTempo, maxTempo
 
 # Funciones de consulta
 
@@ -238,7 +252,7 @@ def eventsSize(analyzer):
     """
     Número de eventos de escucha cargados
     """
-    return om.size(analyzer['events'])
+    return lt.size(analyzer['events'])
 
 
 def artistsSize(analyzer):
@@ -252,7 +266,7 @@ def indexHeight(analyzer):
     """
     Altura del arbol
     """
-    return om.height(analyzer['dateIndex'])
+    return om.height(analyzer['created_at'])
 
 
 def indexSize(analyzer):
@@ -276,24 +290,13 @@ def maxKey(analyzer):
     return om.maxKey(analyzer['dateIndex'])
 
 
-def firstEvents(analyzer):
-    key_set = om.keySet(analyzer["events"]) 
-    sub_list = lt.subList(key_set, 1, 5)
-    firstEvents = lt.newList()
-    for key in lt.iterator(sub_list):
-        event = om.get(analyzer["events"], key)
-        lt.addLast(firstEvents,event)
+def firstEvents(analyzer): 
+    firstEvents = lt.subList(analyzer["events"], 1, 5)
     return firstEvents
 
 
 def lastEvents(analyzer):
-    key_set = om.keySet(analyzer["events"])
-    numelem = eventsSize(analyzer)
-    sub_list = lt.subList(key_set, numelem-5,5)
-    lastEvents = lt.newList()
-    for key in lt.iterator(sub_list):
-        event = om.get(analyzer["events"], key)
-        lt.addLast(lastEvents,event)
+    lastEvents = lt.subList(analyzer["events"], -5, 5)
     return lastEvents
 
 
@@ -386,7 +389,9 @@ def musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceability
 
 
 def Req4(analyzer, genero, minTempo, maxTempo):
-    pistas = pistasPorGenero(analyzer, genero, minTempo, maxTempo)
+    entry = mp.get(analyzer['content'], 'tempo')
+    arbolTempo = me.getValue(entry)
+    pistas, minTempo, maxTempo = pistasPorGenero(arbolTempo, genero, minTempo, maxTempo)
     uniqueArtists = mp.newMap(maptype="PROBING")
     lista_Repro = lt.newList("ARRAY_LIST")
     for valor in lt.iterator(pistas):
@@ -401,17 +406,66 @@ def Req4(analyzer, genero, minTempo, maxTempo):
 
 
 def Req5(analyzer, time1, time2):
-    arbolHoras = analyzer["created_at"]
-    valoresHoras = om.values(arbolHoras, time1, time2)
-    eventosRangoHoras = lt.newList("ARRAY_LIST")
-    for lista in lt.iterator(valoresHoras):
-        for evento in lt.iterator(lista):
-            lt.addLast(eventosRangoHoras, evento)
-    mapaPorGenero = mp.newMap(maptype="PROBING")
-    for genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]:
-        pistas = pistasPorGenero(analyzer, genero, None, None)
-        
-    return lt.size(eventosRangoHoras)
+    arbolHoras = analyzer["created_at"] #Sacamos el arbol organizado por horas
+    valoresHoras = om.values(arbolHoras, time1, time2) #Sacar los valores del arbol en el rango de horas
+    arbolPorTempo = om.newMap(omaptype="RBT", comparefunction=compareValues) #Crear un arbol vacio organizado por tempo
+    for lista in lt.iterator(valoresHoras): #Recorrer la lista de listas
+        for evento in lt.iterator(lista): #Recorrer cada lista de eventos
+            tempo = float(evento['tempo']) #Abstraer el tempo del evento
+            existe = om.get(arbolPorTempo, tempo) #Revisar si el tempo ya fue creado en el arbol de tempo
+            if existe is None: #Si no esta creado
+                eventList = lt.newList('ARRAY_LIST', cmpfunction=compareValues) # Crear una lista vacia
+                om.put(arbolPorTempo, tempo, eventList) #Agregar la lista al nodo de tempo respectivo
+            else: #Si está creado
+                eventList = me.getValue(existe) #Recuperar la lista del nodo
+            lt.addLast(eventList, evento) #Agregar el evento del rango de horas a la lista del respectivo nodo de tempo
+    mapaPorGenero = mp.newMap(maptype="PROBING") #Se crea un diccionario vacio
+    mapaPorSize =  om.newMap(omaptype="RBT") #Se crea un arbol vacio
+    for genero in ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]: #Por cada genero que existe
+        pistas, minTempo, maxTempo = pistasPorGenero(arbolPorTempo, genero, None, None) #Se saca la lista de listas con los eventos por genero
+        listaEventos = lt.newList("ARRAY_LIST", cmpfunction=compareIds2) #Se crea una lista vacia donde se guardaran los eventos por genero
+        for lista in lt.iterator(pistas): #Se recorre la lista de listas
+            for evento in lt.iterator(lista): #Se recorre cada lista de eventos
+                lt.addLast(listaEventos, evento) #Se añade el evento a la lista del genero
+        sizeLista = lt.size(listaEventos) #Se saca el tamaño de la lista del genero
+        mp.put(mapaPorGenero, genero, listaEventos) #Se agrega la lista de eventos al mapa con llave el respectivo genero
+        om.put(mapaPorSize, sizeLista, genero) #Se agrega al mapaPorSize el numero de reps del genero como llave y el genero como valor
+    mayorsize = om.maxKey(mapaPorSize)
+    entry = om.get(mapaPorSize, mayorsize)
+    mayorGenero = me.getValue(entry)
+    entry = mp.get(mapaPorGenero, mayorGenero) #Se sacan los eventos del genero que más se repitió
+    eventosMayorGenero = me.getValue(entry)
+    uniqueTracks = mp.newMap(maptype="PROBING") #Se crea un mapa vacio para sacar los track_id unicos
+    for evento in lt.iterator(eventosMayorGenero):
+        existe = mp.get(uniqueTracks, evento["track_id"])
+        if existe is None:
+            lista_hashtags = lt.newList()
+            mp.put(uniqueTracks, evento["track_id"], lista_hashtags)
+        else:
+            lista_hashtags = me.getValue(existe)
+        for hashtag in lt.iterator(evento["hashtag"]): #Se recorre la lista de hashtags del evento
+            lt.addLast(lista_hashtags, hashtag) #Se agrega cada ht a la lista de ht de la pista única
+    llavesTrackId = mp.keySet(uniqueTracks)
+    totalUniqueTracks = lt.size(llavesTrackId)
+    random10Tracks = lt.subList(llavesTrackId, random.randint(1, totalUniqueTracks-10), 10)
+    sample = lt.newList()
+    for trackId in lt.iterator(random10Tracks):
+        entry = mp.get(uniqueTracks, trackId)
+        hashtagsEvento = me.getValue(entry)
+        vaderAvg = 0
+        totalHt = 0
+        for hashtag in lt.iterator(hashtagsEvento):
+            entry = mp.get(analyzer["sentiments"], hashtag.lower())
+            if entry is not None:
+                vader = me.getValue(entry)
+                if vader is not None:
+                    vaderAvg += vader
+                    totalHt += 1
+        if totalHt > 0:
+            vaderAvg /= totalHt
+        lt.addLast(sample, (trackId, totalHt, round(vaderAvg, 1))
+
+    return om.size(arbolPorTempo), mapaPorSize, totalUniqueTracks, sample
 
 
 # Funciones utilizadas para comparar elementos dentro de una lista

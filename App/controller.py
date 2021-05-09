@@ -52,15 +52,17 @@ def loadData(analyzer, hashtag, sentiments, context):
     contextfile = cf.data_dir + context
     context_file = csv.DictReader(open(contextfile, encoding="utf-8"),
                                   delimiter=",")
-    for hastag in hashtag_file:
-        model.addHashtag(analyzer, hastag)
-
-    for event in context_file:
-        model.addEvent(analyzer, event)
-
     sentimentsfile = cf.data_dir + sentiments
     sentiments_file = csv.DictReader(open(sentimentsfile, encoding="utf-8"),
                                      delimiter=",")
+    for event in context_file:
+        model.addEvent(analyzer, event)
+    posEvent = 1
+    for hastag in hashtag_file:
+        posEvent = model.addHashtag(analyzer, hastag, posEvent)
+    
+    model.crearArboles(analyzer)
+
     for sentiment in sentiments_file:
         model.addSentiment(analyzer, sentiment)
     return analyzer
