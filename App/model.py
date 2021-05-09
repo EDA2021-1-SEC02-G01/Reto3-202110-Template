@@ -463,7 +463,7 @@ def Req5(analyzer, time1, time2):
                     totalHt += 1
         if totalHt > 0:
             vaderAvg /= totalHt
-        lt.addLast(sample, (trackId, totalHt, round(vaderAvg, 1))
+        lt.addLast(sample, (trackId, totalHt, round(vaderAvg, 1)))
 
     return om.size(arbolPorTempo), mapaPorSize, totalUniqueTracks, sample
 
