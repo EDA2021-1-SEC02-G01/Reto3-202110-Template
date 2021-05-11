@@ -23,6 +23,8 @@
 import config as cf
 import sys
 import controller
+import time
+import tracemalloc
 from DISClib.DataStructures import mapentry as me
 from DISClib.ADT import map as mp
 from DISClib.ADT import orderedmap as om
@@ -52,22 +54,53 @@ def printMenu():
     print("0- Presione cualquier otra tecla para salir")
 
 
-hashtag = 'user_track_hashtag_timestamp-small.csv'
+hashtag = 'user_track_hashtag_timestamp-10pct.csv'
 sentiments = 'sentiment_values.csv'
-context = 'context_content_features-small.csv'
+context = 'context_content_features-10pct.csv'
 
 """
 Menu principal
 """
 while True:
     printMenu()
-    inputs = input('Seleccione una opción para continuar\n')
+    inputs = input('Seleccione una opción para continuar\n>')
     if int(inputs[0]) == 1:
         # cont es el controlador que se usará de acá en adelante
         print('Inicializando el catálogo ...\n')
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         analyzer = controller.init()
 
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 2:
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         print("Cargando información de los archivos ...\n")
         controller.loadData(analyzer, hashtag, sentiments, context) #Se cargan los archivos
         print('Eventos de escucha cargados: ' +
@@ -77,6 +110,15 @@ while True:
         print('Pistas de audio únicas cargadas: ' +
               str(controller.indexSize(analyzer))) #Se imprime el total de pistas de audio unicas
         print()
+
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
         print('5 primeros eventos:') #Se imprimen los 5 primeros eventos
         firstEvents = controller.firstEvents(analyzer)
         for event in lt.iterator(firstEvents):
@@ -86,6 +128,7 @@ while True:
             print(f"Track Id: {track_id}, " +
                   f"Artist Id: {user_id}, " +
                   f"Event Id: {user_id}")
+        print()
         print('5 ultimos eventos:') #Se imprimen los 5 ultimos eventos
         lastEvents = controller.lastEvents(analyzer)
         for event in lt.iterator(lastEvents):
@@ -96,19 +139,49 @@ while True:
                   f"Artist Id: {user_id}, " +
                   f"Event Id: {user_id}")
         print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 3:
         caracteristica = input('Ingrese la característica de contenido deseada: ').lower()
         limInf = float(input("Ingrese el limite inferior: "))
         limSup = float(input("Ingrese el limite superior: "))   
         print("Cargando la informacion...")   
-        print()  
+        print()
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         respuesta = controller.Req1(analyzer, caracteristica, limInf, limSup)
+
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
         if respuesta is not None:
             totalRepro, numArtistas = respuesta
             print("+++++ Req No. 1 results... +++++")
             print(f"{caracteristica} is between {limInf} and {limSup}")
             print(f"Total Reproductions: {totalRepro}  |  Total Unique Artists: {numArtistas}")
-            print()
+        print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 4:
         energyMin = float(input("Ingrese el limite inferior de la caracteristica Energy: "))
         energyMax = float(input("Ingrese el limite superior de la caracteristica Energy: "))
@@ -116,7 +189,26 @@ while True:
         danceabilityMax = float(input("Ingrese el limite superior de la caracteristica Danceability: "))
         print("Cargando informacion...")
         print()
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         num_tracks, random_tracks = controller.musicaFestejar(analyzer, energyMin, energyMax, danceabilityMin, danceabilityMax)
+
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
+        print("+++++ Req No. 2 results... +++++")
         print(f"Energy is between {energyMin} and {energyMax}")
         print(f"Danceability is between {danceabilityMin} and {danceabilityMax}")
         print(f"Total de tracks en eventos: {num_tracks}")
@@ -129,16 +221,42 @@ while True:
             danceability = event["danceability"]
             print(f"Track {cuenta}: {track_id} with energy of {energy} and danceability of {danceability}")
             cuenta += 1
+        print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 5:
         limInf1 = float(input("El valor mínimo del rango para Instrumentalness: "))
         limSup1 = float(input("El valor máximo del rango para Instrumentalness: "))
         limInf2 = float(input("El valor mínimo del rango para el Tempo: "))
         limSup2 = float(input("El valor máximo del rango para el Tempo: "))
         print("Cargando la informacion...")   
-        print() 
+        print()
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         respuesta = controller.Req3(analyzer, limInf1, limSup1, limInf2, limSup2)
+
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
         if respuesta is not None:
             num_tracks, random5Tracks = respuesta
+            print("+++++ Req No. 3 results... +++++")
             print(f"Instrumentalness is between {limInf1} and {limSup1}")
             print(f"Tempo is between {limInf2} and {limSup2}")
             print(f"Total unique tracks in events: {num_tracks}")
@@ -151,6 +269,13 @@ while True:
                 tempo = event["tempo"]
                 print(f"Track {cuenta}: {track_id} with instrumentalness of {instrumentalness} and tempo of {tempo}")
                 cuenta += 1
+        print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 6:
         genre_list = ["Reggae", "Down-tempo", "Chill-out", "Hip-hop", "Jazz and Funk", "Pop", "R&B", "Rock", "Metal"]
         print("Los generos más comunes son:")
@@ -160,6 +285,15 @@ while True:
         generos = generos.replace(" ", "").split(",")
         total_Repro = 0
         tuplas = []
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         for genero in generos:
             if genero not in genre_list:
                 print(f"El genero {genero} no se encuentra en nuestros registros. Se creará {genero}")
@@ -172,6 +306,15 @@ while True:
             info = (genero, diezPrimeros, total_Artistas, genre_repro, minTempo, maxTempo)
             tuplas.append(info)
             total_Repro += genre_repro
+        
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
         print()
         print("+"*5 + " Req No. 4 Results... " + "+"*5)
         print(f"Total reproductions: {total_Repro}")
@@ -187,10 +330,35 @@ while True:
                 print(f"Artist {cuenta}: {artista}")
                 cuenta += 1
             print()
+        print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
+
     elif int(inputs[0]) == 7:
         time1 = input("Ingrese el limite inferior del horario a buscar: ")
         time2 = input("Ingrese el limite superior del horario a buscar: ")
+
+        # inicia toma de tiempo y memoria
+        delta_time = -1.0
+        delta_memory = -1.0
+        tracemalloc.start()
+        start_time = controller.getTime()
+        start_memory = controller.getMemory()
+        # inicia toma de tiempo y memoria
+
         total_repro, mapaPorSize, totalUniqueTracks, sample = controller.Req5(analyzer, time1.strip(), time2.strip())
+
+        # finaliza toma de tiempo y memoria
+        stop_memory = controller.getMemory()
+        stop_time = controller.getTime()
+        tracemalloc.stop()
+        delta_time = stop_time - start_time
+        delta_memory = controller.deltaMemory(start_memory, stop_memory)
+        # finaliza toma de tiempo y memoria 
+
         print()
         print("+"*5 + " Req No. 5 Results... " + "+"*5)
         print(f"There is a total of {total_repro} reproductions between {time1} and {time2}")
@@ -216,6 +384,12 @@ while True:
             trackId, totalHt, vaderAvg = info
             print(f"TOP {i} track: {trackId} with {totalHt} hashtags and VADER = {vaderAvg}")
             i += 1
+        print()
+
+        # imprime la toma del tiempo y memoria
+        print("Tiempo [ms]: " + str(round(delta_time, 3)), "  ||  ",
+              "Memoria [kB]: ", str(round(delta_memory, 3)))
+        print()
     else:
         sys.exit(0)
 sys.exit(0)
